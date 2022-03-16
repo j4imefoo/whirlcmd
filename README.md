@@ -7,6 +7,7 @@ We will need to:
 - Add option `cli.api.http-enable=true` to `whirlpool-cli-config.properties`
 - Create a new Onion service that will give access to our port 8898
 - Leave whirlpool-cli running in tmux or screen
+- We need tor running on the client machine
 
 ## Configuration
 All configurable parameters can be found in the script
@@ -16,7 +17,11 @@ All configurable parameters can be found in the script
 - `apiVersion` the value you will find in `https://code.samourai.io/whirlpool/whirlpool-client-cli/-/blob/develop/src/main/java/com/samourai/whirlpool/cli/api/protocol/CliApi.java`
 
 ## Usage
-This script will allow you to interact with your remote whirlpool-cli installation. The following commands are accepted:
+This script will allow you to interact with your remote whirlpool-cli installation. 
+
+Please note that this was intended to be used on an Android mobile phone using Termux but it can be used in any machine running Python.
+
+The following commands are accepted:
 
 - `whirlcmd lspost` : list all utxos being mixed in the postmix wallet
 - `whirlcmd lspre` : list all utxos in the premix wallet
