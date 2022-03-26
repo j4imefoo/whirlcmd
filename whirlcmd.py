@@ -2,56 +2,82 @@
 
 import json
 import sys
-import subprocess
+import signal
 import requests
+import argparse
+
+## USER CONFIGURATION
 
 url = 'http://our-onion-service-address.onion:8898/rest/'
 apiKey = 'api-key-from-whirlpool-cli-config.properties'
-apiVersion = "0.10"
+TOR_PORT = '9050'
+apiVersion = '0.10'
 
+## END USER CONFIGURATION
+
+cmd = {'deposit': 'wallet/deposit?increment=true', 'list': 'utxos', 'start': '/startMix', 'stop': '/stopMix', 'startAll': 'mix/start', 'stopAll': 'mix/stop', 'pools': 'pools'}
 headers = {'apiKey': apiKey, 'apiVersion': apiVersion }
-cmd_deposit = "wallet/deposit?increment=true"
-cmd_list = "utxos"
-cmd_start = "/startMix"
-cmd_stop = "/stopMix"
-cmd_startAll = "mix/start"
-cmd_stopAll = "mix/stop"
-cmd_pools = "pools"
+feeTarget = ['BLOCKS_2', 'BLOCKS_4', 'BLOCKS_6', 'BLOCKS_12', 'BLOCKS_24']
 
-feeTarget = ["BLOCKS_2", "BLOCKS_4", "BLOCKS_6", "BLOCKS_12", "BLOCKS_24"]
+def sigint_handler(signal, frame):
+    print ('Cancelled.')
+    sys.exit(0)
 
 def get_tor_session():
     session = requests.session()
-    session.proxies = {'http':  'socks5h://127.0.0.1:9050',
-                       'https': 'socks5h://127.0.0.1:9050'}
+    session.proxies = {'http':  'socks5h://127.0.0.1:' + TOR_PORT,
+                       'https': 'socks5h://127.0.0.1:' + TOR_PORT}
     return session
 
-def exit_usage():
-     print("Usage: %s lspost|lspre|lsdepo|pools|deposit|start|stop [utxo:n]|[all]"% (sys.argv[0]))
-     print("         lspost | lspre | lsdepo: list utxos in postmix, premix or deposit wallets")
-     print("         pools: list whirlpool running pools")
-     print("         deposit: generate a new deposit address")
-     print("         start utxo:n | all: start mixing a specific utxo or all")
-     print("         stop utxo:n | all: stop mixing a specific utxo or all")
-     exit(1)
-
 def listutxos(wallet):
-    req = session.get(url + cmd_list, verify=False, headers=headers)
+    try:
+        req = session.get(url + cmd['list'], verify=False, headers=headers)
+    except IOError:
+        print("Please, make sure you are running TOR!")
+        exit(1)
     result = req.json()
     utxos = result[wallet]['utxos']
-    print("Total: %d utxos = %.3f"% (len(utxos), result[wallet]['balance']/100000000))
+    if full_output:
+        print("Total: %d utxos = %.3f"% (len(utxos), result[wallet]['balance']/100000000))
     if (len(utxos)>0):
-        print("%s %s %-66s %-42s %11s %11s %s"% ("balance", "confs", "utxo", "address", "status", "mixable", "mixes"))
+        if full_output:
+            print(f"{'balance'} {'confs'} {'utxo':66} {'address':42} {'mixes':5} {'status':11}")
+        else:
+            print(f"{'balance'} {'confs'} {'mixes':5} {'status':11}")
+    lines = []
     for entry in utxos:
-        print("%7.3f %5d %s:%d %s %11s %11s %d"% (entry['value']/100000000, entry['confirmations'], entry['hash'], entry['index'], entry['address'], entry['status'], entry['mixableStatus'], entry['mixsDone']))
+        line = {}
+        line['value'] = entry['value']/100000000
+        line['confs'] = entry['confirmations']
+        line['utxo'] = f"{entry['hash']}:{entry['index']}"
+        line['address'] = entry['address']
+        line['mixes'] = entry['mixsDone']
+        line['status'] = entry['status']
+        lines.append(line)
+
+    lines.sort(key=lambda item: item.get("mixes"))
+    
+    for line in lines:
+        if full_output:
+            print(f"{line['value']:7.3f} {line['confs']:5d} {line['utxo']} {line['address']} {line['mixes']:5} {line['status']:11}")
+        else:
+            print(f"{line['value']:7.3f} {line['confs']:5d} {line['mixes']:5} {line['status']:11}")
 
 def deposit():
-    req = session.get(url + cmd_deposit, verify=False, headers=headers)
+    try:
+        req = session.get(url + cmd['deposit'], verify=False, headers=headers)
+    except IOError:
+        print("Please, make sure you are running TOR!")
+        exit(1)
     result = req.json()
     print(result['depositAddress'])
 
 def pools():
-    req = session.get(url + cmd_pools + "?tx0FeeTarget=" + feeTarget[4], verify=False, headers=headers)
+    try:
+        req = session.get(url + cmd['pools'] + "?tx0FeeTarget=" + feeTarget[4], verify=False, headers=headers)
+    except IOError:
+        print("Please, make sure you are running TOR!")
+        exit(1)
     result = req.json()
     pools = result['pools']
     print("%10s %10s %10s %10s %10s %15s %s"% ("pool", "fee", "Freeriders", "Premixers", "last (h)", "status", "balance min"))
@@ -61,19 +87,24 @@ def pools():
 def control(operation, element):
     if element=="all":
         if operation=="start":
-            command=cmd_startAll
+            command=cmd['startAll']
         elif operation=="stop":
-            command=cmd_stopAll
+            command=cmd['stopAll']
     else:
         try:
             utxohash, utxoindex = sys.argv[2].split(":")
         except:
-            exit_usage()
+            print('Error in utxo')
+            sys.exit(1)
         if operation=="start":
-            command="utxos/" + utxohash + ":" + utxoindex + cmd_start
+            command="utxos/" + utxohash + ":" + utxoindex + cmd['start']
         elif operation=="stop":
-            command="utxos/" + utxohash + ":" + utxoindex + cmd_stop
-    req = session.post(url + command, verify=False, headers=headers)
+            command="utxos/" + utxohash + ":" + utxoindex + cmd['stop']
+    try:
+        req = session.post(url + command, verify=False, headers=headers)
+    except IOError:
+        print("Please, make sure you are running TOR!")
+        sys.exit(1)
     if req.status_code == 200:
         print("OK!")
     elif req.status_code == 500:
@@ -82,20 +113,62 @@ def control(operation, element):
         print(req)
 
 if __name__ == "__main__":
-    
+    signal.signal(signal.SIGINT, sigint_handler)
     session = get_tor_session()
+    parser = argparse.ArgumentParser(description='A commandline tool to control Samourai Whirlpool coinjoins using Whirlpool API')
+    parser.add_argument(
+        '-g',
+        '--light',
+        help='Light mode. Display more compact information',
+        action='store_true',
+        default=False
+    )
+    group = parser.add_mutually_exclusive_group()
+    group.add_argument(
+        '-l',
+        '--list',
+        help='List utxos in postmix, premix or deposit wallets',
+        type=str,
+        choices=['postmix', 'premix', 'deposit'],
+        default=False,
+    )
+    group.add_argument(
+        '-p',
+        '--pools',
+        help='List of pools',
+        action='store_true',
+        default=False
+    )
+    group.add_argument(
+        '-d',
+        '--deposit',
+        help='Get a new address to receive bitcoin',
+        action='store_true',
+        default=False
+    )
+    group.add_argument(
+        '-s',
+        '--start',
+        help='Start mixing a utxo or all of them',
+        type=str
+    )
+    group.add_argument(
+        '-t',
+        '--stop',
+        help='Stop mixing a utxo or all of them',
+        type=str
+    )
 
-    if len(sys.argv)==3 and (sys.argv[1]=="start" or sys.argv[1]=="stop"):
-        control(sys.argv[1], sys.argv[2]);
-    elif len(sys.argv)==2 and sys.argv[1]=="deposit":
+
+    args = parser.parse_args()
+    full_output = not args.light
+    if args.start:
+        control('start', args.start)
+    elif args.stop:
+        control('stop', args.stop)
+    elif args.deposit:
         deposit()
-    elif len(sys.argv)==2 and sys.argv[1]=="lspost":
-        listutxos('postmix')
-    elif len(sys.argv)==2 and sys.argv[1]=="lsdepo":
-        listutxos('deposit')
-    elif len(sys.argv)==2 and sys.argv[1]=="lspre":
-        listutxos('premix')
-    elif len(sys.argv)==2 and sys.argv[1]=="pools":
+    elif args.list:
+        listutxos(args.list)
+    elif args.pools:
         pools()
-    else:
-        exit_usage()

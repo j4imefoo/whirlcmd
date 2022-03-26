@@ -22,17 +22,20 @@ This script will allow you to interact with your remote whirlpool-cli installati
 Please note that this was intended to be used on an Android mobile phone using Termux but it can be used in any machine running Python.
 
 The following commands are accepted:
+```
+$ whirlcmd [options]
 
-- `whirlcmd lspost` : list all utxos being mixed in the postmix wallet
-- `whirlcmd lspre` : list all utxos in the premix wallet
-- `whirlcmd lsdepo` : list all utxos in the deposit wallet
-- `whirlcmd pools` : list all pools and their state
-- `whirlcmd deposit` : get a new deposit address
-- `whirlcmd start all` : start to mix all utxos in the postmix wallet
-- `whirlcmd start utxo:n` : start to mix a certain utxo
-- `whirlcmd stop all` : stop mixing all utxos
-- `whirlcmd stop utxo:n` : stop mixing a certain utxo
-
+optional arguments:
+  -h, --help            show this help message and exit
+  -g, --light           Light mode. Display more compact information
+  -l {postmix,premix,deposit}, --list {postmix,premix,deposit}
+                        List utxos in postmix, premix or deposit wallets
+  -p, --pools           List of pools
+  -d, --deposit         Get a new address to receive bitcoin
+  -s {all,utxo}, --start {all,utxo}
+                        Start mixing a utxo or all of them
+  -t {all,utxo}, --stop {all,utxo}  Stop mixing a utxo or all of them
+```
 
 ## More information:
 https://twitter.com/j4imefoo
