@@ -22,25 +22,29 @@ All configurable parameters can be found in the script
 
 ## Usage
 
-This script will allow you to interact with your remote whirlpool-cli installation. 
+This script will allow you to interact with your remote whirlpool-cli installation.
 
 Please note that this was intended to be used on an Android mobile phone using Termux but it can be used in any machine running Python.
 
 The following commands are accepted:
 
 ```bash
-$ whirlcmd [options]
+$ whirlcmd -h
+usage: whirlcmd.py [-h] [-u] [-g] [-l {postmix,premix,deposit} | -p | -d | -s START | -t STOP]
+
+A commandline tool to control Samourai Whirlpool coinjoins using Whirlpool API
 
 optional arguments:
   -h, --help            show this help message and exit
+  -u, --unlock          Unlock the Whirlpool wallet
   -g, --light           Light mode. Display more compact information
   -l {postmix,premix,deposit}, --list {postmix,premix,deposit}
                         List utxos in postmix, premix or deposit wallets
   -p, --pools           List of pools
   -d, --deposit         Get a new address to receive bitcoin
-  -s {all,utxo}, --start {all,utxo}
+  -s START, --start START
                         Start mixing a utxo or all of them
-  -t {all,utxo}, --stop {all,utxo}  Stop mixing a utxo or all of them
+  -t STOP, --stop STOP  Stop mixing a utxo or all of them
 ```
 
 ## More information:
