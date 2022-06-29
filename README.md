@@ -32,7 +32,7 @@ The following commands are accepted:
 $ whirlcmd -h
 usage: whirlcmd.py [-h] [-u] [-g] [-l {postmix,premix,deposit} | -p | -d | -s START | -t STOP]
 
-A commandline tool to control Samourai Whirlpool coinjoins using Whirlpool API
+A command-line tool to control Samourai Whirlpool CoinJoins using the Whirlpool API.
 
 optional arguments:
   -h, --help            show this help message and exit
@@ -42,9 +42,9 @@ optional arguments:
                         List utxos in postmix, premix or deposit wallets
   -p, --pools           List of pools
   -d, --deposit         Get a new address to receive bitcoin
-  -s START, --start START
+  -s {all,utxo}, --start {all,utxo}
                         Start mixing a utxo or all of them
-  -t STOP, --stop STOP  Stop mixing a utxo or all of them
+  -t {all,utxo}, --stop {all,utxo}  Stop mixing a utxo or all of them
 ```
 
 ## More information:
