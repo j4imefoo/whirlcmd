@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+import getpass
 import json
 import sys
 import signal
@@ -15,7 +16,7 @@ apiVersion = '0.10'
 
 ## END USER CONFIGURATION
 
-cmd = {'deposit': 'wallet/deposit?increment=true', 'list': 'utxos', 'start': '/startMix', 'stop': '/stopMix', 'startAll': 'mix/start', 'stopAll': 'mix/stop', 'pools': 'pools'}
+cmd = {'deposit': 'wallet/deposit?increment=true', 'list': 'utxos', 'start': '/startMix', 'stop': '/stopMix', 'startAll': 'mix/start', 'stopAll': 'mix/stop', 'pools': 'pools', 'unlock': 'cli/login'}
 headers = {'apiKey': apiKey, 'apiVersion': apiVersion }
 feeTarget = ['BLOCKS_2', 'BLOCKS_4', 'BLOCKS_6', 'BLOCKS_12', 'BLOCKS_24']
 
@@ -29,6 +30,26 @@ def get_tor_session():
                        'https': 'socks5h://127.0.0.1:' + TOR_PORT}
     return session
 
+def unlock():
+    try:
+        req = session.get(url + "cli", verify=False, headers=headers)
+        response = req.json()
+        if response['loggedIn'] == True:
+            print("Whirlpool is already unlocked!")
+        else:
+            passphrase = getpass.getpass('Please enter your Whirlpool wallet passphrase:')
+            payload = { 'seedPassphrase': passphrase }
+            req = session.post(url + cmd['unlock'], verify=False, headers=headers, json=payload)
+            response = req.json()
+            if response['loggedIn'] == True:
+                print("Unlocked Whirlpool successfully!")
+            else:
+                print("Unable to unlock Whirlpool, please check the passphrase you entered and try again!")
+                exit(1)
+    except IOError:
+        print("Please, make sure you are running Tor!")
+        exit(1)
+
 def listutxos(wallet):
     try:
         req = session.get(url + cmd['list'], verify=False, headers=headers)
@@ -39,7 +60,7 @@ def listutxos(wallet):
     try:
         utxos = result[wallet]['utxos']
     except KeyError:
-        print("Please, make sure your Whirlpool wallet is unlocked!")
+        print("Please, make sure your Whirlpool wallet is unlocked via --unlock!")
         exit(1)
     if full_output:
         print("Total: %d utxos = %.3f"% (len(utxos), result[wallet]['balance']/100000000))
@@ -119,7 +140,14 @@ def control(operation, element):
 if __name__ == "__main__":
     signal.signal(signal.SIGINT, sigint_handler)
     session = get_tor_session()
-    parser = argparse.ArgumentParser(description='A commandline tool to control Samourai Whirlpool coinjoins using Whirlpool API')
+    parser = argparse.ArgumentParser(description='A command-line tool to control Samourai Whirlpool CoinJoins using the Whirlpool API.')
+    parser.add_argument(
+        '-u',
+        '--unlock',
+        help='Unlock the Whirlpool wallet',
+        action='store_true',
+        default=False
+    )
     parser.add_argument(
         '-g',
         '--light',
@@ -166,7 +194,9 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
     full_output = not args.light
-    if args.start:
+    if args.unlock:
+        unlock()
+    elif args.start:
         control('start', args.start)
     elif args.stop:
         control('stop', args.stop)
