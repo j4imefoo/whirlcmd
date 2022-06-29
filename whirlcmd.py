@@ -33,10 +33,14 @@ def listutxos(wallet):
     try:
         req = session.get(url + cmd['list'], verify=False, headers=headers)
     except IOError:
-        print("Please, make sure you are running TOR!")
+        print("Please, make sure you are running Tor!")
         exit(1)
     result = req.json()
-    utxos = result[wallet]['utxos']
+    try:
+        utxos = result[wallet]['utxos']
+    except KeyError:
+        print("Please, make sure your Whirlpool wallet is unlocked!")
+        exit(1)
     if full_output:
         print("Total: %d utxos = %.3f"% (len(utxos), result[wallet]['balance']/100000000))
     if (len(utxos)>0):
@@ -67,7 +71,7 @@ def deposit():
     try:
         req = session.get(url + cmd['deposit'], verify=False, headers=headers)
     except IOError:
-        print("Please, make sure you are running TOR!")
+        print("Please, make sure you are running Tor!")
         exit(1)
     result = req.json()
     print(result['depositAddress'])
@@ -76,7 +80,7 @@ def pools():
     try:
         req = session.get(url + cmd['pools'] + "?tx0FeeTarget=" + feeTarget[4], verify=False, headers=headers)
     except IOError:
-        print("Please, make sure you are running TOR!")
+        print("Please, make sure you are running Tor!")
         exit(1)
     result = req.json()
     pools = result['pools']
@@ -103,7 +107,7 @@ def control(operation, element):
     try:
         req = session.post(url + command, verify=False, headers=headers)
     except IOError:
-        print("Please, make sure you are running TOR!")
+        print("Please, make sure you are running Tor!")
         sys.exit(1)
     if req.status_code == 200:
         print("OK!")
