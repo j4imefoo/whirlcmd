@@ -1,6 +1,6 @@
 # whirlcmd
 
-A command-line tool to control Samourai's Whirlpool coinjoins using Whirlpool API
+A command-line tool to control Samourai Whirlpool CoinJoins using the Whirlpool API.
 
 ## Prerequisites
 
@@ -10,15 +10,16 @@ Before using whirlcmd, you will need to:
 - Add option `cli.api.http-enable=true` to `whirlpool-cli-config.properties`
 - Create a new Onion service that will give access to our port 8898
 - Leave whirlpool-cli running in tmux or screen
-- We need tor running on the client machine
+- We need Tor running on the client machine
 
 ## Configuration
 
-All configurable parameters can be found in the script
+All configurable parameters can be found in the `whirlcmdconfig.ini` configuration file:
 
-- `url` will point to our onion service: `url = 'http://our-onion-service-address.onion:8898/rest/'`
-- `apiKey` the key you will find in your `whirlpool-cli-config.properties`
-- `apiVersion` the value you will find in `https://code.samourai.io/whirlpool/whirlpool-client-cli/-/blob/develop/src/main/java/com/samourai/whirlpool/cli/api/protocol/CliApi.java`
+- `url`: will point to our onion service: `url = 'http://our-onion-service-address.onion:8898/rest/'`
+- `apiKey`: the key you will find in your `whirlpool-cli-config.properties`
+- `apiVersion`: the value you will find in `https://code.samourai.io/whirlpool/whirlpool-client-cli/-/blob/develop/src/main/java/com/samourai/whirlpool/cli/api/protocol/CliApi.java`
+- `TOR_PORT`: The local Tor SOCKS5 port to use, usually 9050 in case of Tor daemon or 9150 for Tor browser
 
 ## Usage
 
