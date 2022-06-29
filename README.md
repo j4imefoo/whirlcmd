@@ -12,11 +12,22 @@ Before using whirlcmd, you will need to:
 - Leave whirlpool-cli running in tmux or screen
 - We need Tor running on the client machine
 
+## Installation
+
+In order to install this script, simply clone the repository and install the requirements (if necessary) via the below commands:
+
+```bash
+git clone https://github.com/j4imefoo/whirlcmd.git
+python3 -m pip install -r requirements.txt
+```
+
+***Please note that you must be running Tor (either via the daemon or the Tor browser) in order for the script to properly gather offers over Tor. The easiest way to get started if you're unfamiliar is to download and run [the Tor browser](https://www.torproject.org/download/) and edit `TOR_PORT` to `9150` as shown below.***
+
 ## Configuration
 
 All configurable parameters can be found in the `whirlcmdconfig.ini` configuration file:
 
-- `url`: will point to our onion service: `url = 'http://our-onion-service-address.onion:8898/rest/'`
+- `url`: will point to our onion service, i.e. `http://our-onion-service-address.onion:8898/rest/`
 - `apiKey`: the key you will find in your `whirlpool-cli-config.properties`
 - `apiVersion`: the value you will find in `https://code.samourai.io/whirlpool/whirlpool-client-cli/-/blob/develop/src/main/java/com/samourai/whirlpool/cli/api/protocol/CliApi.java`
 - `TOR_PORT`: The local Tor SOCKS5 port to use, usually 9050 in case of Tor daemon or 9150 for Tor browser
