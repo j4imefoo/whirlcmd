@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+import configparser
 import getpass
 import json
 import sys
@@ -7,17 +8,12 @@ import signal
 import requests
 import argparse
 
-## USER CONFIGURATION
-
-url = 'http://our-onion-service-address.onion:8898/rest/'
-apiKey = 'api-key-from-whirlpool-cli-config.properties'
-TOR_PORT = '9050'
-apiVersion = '0.10'
-
-## END USER CONFIGURATION
+# Import user configuration from whirlcmdconfig.ini file
+config = configparser.ConfigParser()
+config.read('whirlcmdconfig.ini')
 
 cmd = {'deposit': 'wallet/deposit?increment=true', 'list': 'utxos', 'start': '/startMix', 'stop': '/stopMix', 'startAll': 'mix/start', 'stopAll': 'mix/stop', 'pools': 'pools', 'unlock': 'cli/login'}
-headers = {'apiKey': apiKey, 'apiVersion': apiVersion }
+headers = {'apiKey': config['DEFAULT']['apiKey'], 'apiVersion': config['DEFAULT']['apiVersion'] }
 feeTarget = ['BLOCKS_2', 'BLOCKS_4', 'BLOCKS_6', 'BLOCKS_12', 'BLOCKS_24']
 
 def sigint_handler(signal, frame):
@@ -26,20 +22,20 @@ def sigint_handler(signal, frame):
 
 def get_tor_session():
     session = requests.session()
-    session.proxies = {'http':  'socks5h://127.0.0.1:' + TOR_PORT,
-                       'https': 'socks5h://127.0.0.1:' + TOR_PORT}
+    session.proxies = {'http':  'socks5h://127.0.0.1:' + config['DEFAULT']['TOR_PORT'],
+                       'https': 'socks5h://127.0.0.1:' + config['DEFAULT']['TOR_PORT']}
     return session
 
 def unlock():
     try:
-        req = session.get(url + "cli", verify=False, headers=headers)
+        req = session.get(config['DEFAULT']['url'] + "cli", verify=False, headers=headers)
         response = req.json()
         if response['loggedIn'] == True:
             print("Whirlpool is already unlocked!")
         else:
             passphrase = getpass.getpass('Please enter your Whirlpool wallet passphrase:')
             payload = { 'seedPassphrase': passphrase }
-            req = session.post(url + cmd['unlock'], verify=False, headers=headers, json=payload)
+            req = session.post(config['DEFAULT']['url'] + cmd['unlock'], verify=False, headers=headers, json=payload)
             response = req.json()
             if response['loggedIn'] == True:
                 print("Unlocked Whirlpool successfully!")
@@ -52,7 +48,7 @@ def unlock():
 
 def listutxos(wallet):
     try:
-        req = session.get(url + cmd['list'], verify=False, headers=headers)
+        req = session.get(config['DEFAULT']['url'] + cmd['list'], verify=False, headers=headers)
     except IOError:
         print("Please, make sure you are running Tor!")
         exit(1)
@@ -90,7 +86,7 @@ def listutxos(wallet):
 
 def deposit():
     try:
-        req = session.get(url + cmd['deposit'], verify=False, headers=headers)
+        req = session.get(config['DEFAULT']['url'] + cmd['deposit'], verify=False, headers=headers)
     except IOError:
         print("Please, make sure you are running Tor!")
         exit(1)
@@ -99,7 +95,7 @@ def deposit():
 
 def pools():
     try:
-        req = session.get(url + cmd['pools'] + "?tx0FeeTarget=" + feeTarget[4], verify=False, headers=headers)
+        req = session.get(config['DEFAULT']['url'] + cmd['pools'] + "?tx0FeeTarget=" + feeTarget[4], verify=False, headers=headers)
     except IOError:
         print("Please, make sure you are running Tor!")
         exit(1)
@@ -126,7 +122,7 @@ def control(operation, element):
         elif operation=="stop":
             command="utxos/" + utxohash + ":" + utxoindex + cmd['stop']
     try:
-        req = session.post(url + command, verify=False, headers=headers)
+        req = session.post(config['DEFAULT']['url'] + command, verify=False, headers=headers)
     except IOError:
         print("Please, make sure you are running Tor!")
         sys.exit(1)
